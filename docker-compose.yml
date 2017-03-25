@@ -1,0 +1,43 @@
+version: '2'
+
+services:
+  lb:
+    image: docker.io/digennarot/load-balancing-swarm
+    container_name: lb
+    expose:
+      - "80"
+    depends_on:
+      - web
+    links:
+      - web
+
+  web:
+    image: docker.io/digennarot/hasher
+    ports:
+      - "5000:80"
+    environment:
+      - APP_NAME=hasher
+      - APP_PORT=5000
+      - REDIS_ENABLED=True
+      - REDIS_SERVER=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    links:
+      - redis
+    logging:
+      driver: json-file
+      options:
+        max-size: "30m"
+        max-file: "10"
+
+  redis:
+    image: redis
+    container_name: redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
+    driver: local
